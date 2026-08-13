@@ -59,7 +59,6 @@ fn main() {
         total / (args.count as f64)
     )
 }
-
 fn haversine(x0: f64, y0: f64, x1: f64, y1: f64) -> f64 {
     let lat1 = y0;
     let lat2 = y1;

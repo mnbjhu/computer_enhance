@@ -2,6 +2,23 @@ use std::{fs, iter::Peekable, num::ParseFloatError, str::Chars};
 
 use thiserror::Error;
 
+fn main() {
+    let text = fs::read_to_string("input.json").unwrap();
+    let input = Input::from(text.as_str());
+    let mut total = 0.0;
+    let mut count = 0;
+    input.for_each(|p| {
+        total += haversine(p.x0, p.y0, p.x1, p.y1);
+        count += 1;
+    });
+    println!(
+        "total: {total}, count: {count}, avg: {avg}",
+        avg = total / count as f64
+    )
+}
+
+const EARTH_RAD: f64 = 6372.8;
+
 #[derive(Debug)]
 struct Pair {
     x0: f64,
@@ -44,6 +61,16 @@ struct Input<'a> {
     text: &'a str,
     chars: Peekable<Chars<'a>>,
     offset: usize,
+}
+
+impl<'a> From<&'a str> for Input<'a> {
+    fn from(value: &'a str) -> Self {
+        Self {
+            text: value,
+            chars: value.chars().peekable(),
+            offset: 0,
+        }
+    }
 }
 
 impl<'a> Input<'a> {
@@ -95,16 +122,6 @@ impl<'a> Iterator for Input<'a> {
             None
         }
     }
-}
-
-fn main() {
-    let text = fs::read_to_string("input.json").unwrap();
-    let input = Input {
-        text: &text,
-        chars: text.chars().peekable(),
-        offset: 0,
-    };
-    input.for_each(|p| println!("{p:#?}"));
 }
 
 impl<'a> Input<'a> {
@@ -215,4 +232,22 @@ impl<'a> Input<'a> {
         let value = self.parse_float()?;
         Ok((key, value))
     }
+}
+
+fn haversine(x0: f64, y0: f64, x1: f64, y1: f64) -> f64 {
+    let lat1 = y0;
+    let lat2 = y1;
+    let lon1 = x0;
+    let lon2 = x1;
+
+    let lat_diff = (lat2 - lat1).to_radians();
+    let lon_diff = (lon2 - lon1).to_radians();
+
+    let lat1 = lat1.to_radians();
+    let lat2 = lat2.to_radians();
+
+    let a =
+        (lat_diff / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (lon_diff / 2.0).sin().powi(2);
+    let c = 2.0 * a.sqrt().asin();
+    EARTH_RAD * c
 }
